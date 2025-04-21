@@ -42,6 +42,7 @@ nltk.download('stopwords')
 nltk.download('wordnet')
 nltk.download('omw-1.4') 
 
+load_nltk()
 
  # Preprocessing
 stop_words = set(stopwords.words('english'))
