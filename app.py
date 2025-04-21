@@ -15,6 +15,9 @@ import re
 from gensim import corpora, models
 import time
 
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow info and warning messages
+
 
 
 
@@ -35,7 +38,6 @@ st.set_page_config(
 
 # Download NLTK resources
 nltk.download('punkt')
-nltk.download('punkt_tab')
 nltk.download('stopwords')
 nltk.download('wordnet')
 
