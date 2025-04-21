@@ -65,6 +65,13 @@ def load_data_and_models():
 
     st.write("Loaded columns:", df.columns.tolist())  # ✅ Show actual column names
 
+     # Ensure the required columns exist
+    if "title" in df.columns and "description" in df.columns:
+        df = df[["title", "description"]].dropna().reset_index(drop=True)
+    else:
+        st.error("The required columns 'title' and 'description' are missing from the data.")
+        st.stop()
+
     
     # Continue with data processing
     df = df[["title", "description"]].dropna().reset_index(drop=True)
