@@ -59,7 +59,7 @@ def load_data_and_models():
         try:
             
             csv_url = "https://raw.githubusercontent.com/svaditya18/Book-Recommendation-System/main/data/book_details.csv"
-            df = pd.read_csv(csv_url, encoding='utf-8', on_bad_lines='skip')
+            df = pd.read_csv(csv_url, encoding='latin1', on_bad_lines='skip')
         except Exception as e:
             st.error(f"Failed to read CSV file: {str(e)}")
             st.stop()
