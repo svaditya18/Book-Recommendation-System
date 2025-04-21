@@ -15,6 +15,11 @@ import re
 from gensim import corpora, models
 import time
 
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt')
+
 # Set page config
 st.set_page_config(
     page_title="Book Recommendation System",
