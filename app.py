@@ -23,7 +23,7 @@ import time
 
 # Your existing code continues here
 
-tf.config.set_visible_devices([], 'GPU')
+
 
 
 # Set page config
