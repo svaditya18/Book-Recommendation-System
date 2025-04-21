@@ -20,6 +20,12 @@ import re
 from gensim import corpora, models
 import time
 
+nltk.download('punkt')
+nltk.download('punkt_tab')
+nltk.download('stopwords')
+nltk.download('wordnet')
+nltk.download('omw-1.4', quiet=True)
+
 # Set page config
 st.set_page_config(
     page_title="Book Recommendation System",
