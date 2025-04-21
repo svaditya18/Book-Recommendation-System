@@ -30,6 +30,8 @@ except LookupError:
 
 # Your existing code continues here
 
+tf.config.set_visible_devices([], 'GPU')
+
 
 # Set page config
 st.set_page_config(
