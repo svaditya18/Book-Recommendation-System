@@ -62,6 +62,9 @@ def load_data_and_models():
         except Exception as e:
             st.error(f"Failed to read CSV file: {str(e)}")
             st.stop()
+
+    st.write("Loaded columns:", df.columns.tolist())  # ✅ Show actual column names
+
     
     # Continue with data processing
     df = df[["title", "description"]].dropna().reset_index(drop=True)
