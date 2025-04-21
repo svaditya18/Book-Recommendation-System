@@ -15,18 +15,11 @@ import re
 from gensim import corpora, models
 import time
 
-try:
-    nltk.data.find('tokenizers/punkt')
-except LookupError:
-    nltk.download('punkt')
 
 
 
-# Download punkt_tab resource
-try:
-    nltk.data.find('tokenizers/punkt_tab')
-except LookupError:
-    nltk.download('punkt_tab')
+
+
 
 # Your existing code continues here
 
@@ -42,6 +35,7 @@ st.set_page_config(
 
 # Download NLTK resources
 nltk.download('punkt')
+nltk.download('punkt_tab')
 nltk.download('stopwords')
 nltk.download('wordnet')
 
