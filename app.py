@@ -53,10 +53,13 @@ def load_data_and_models():
     """Load data and train models (cached for performance)"""
     # Load data with encoding fallback
     try:
-        df = pd.read_csv(r"C:\Users\adity\OneDrive\Desktop\br\data\book_details.csv", encoding='utf-8')
+        csv_url = "https://raw.githubusercontent.com/svaditya18/Book-Recommendation-System/main/data/book_details.csv"
+        df = pd.read_csv(csv_url, encoding='utf-8', on_bad_lines='skip')
     except UnicodeDecodeError:
         try:
-            df = pd.read_csv(r"C:\Users\adity\OneDrive\Desktop\br\data\book_details.csv", encoding='latin1')
+            
+            csv_url = "https://raw.githubusercontent.com/svaditya18/Book-Recommendation-System/main/data/book_details.csv"
+            df = pd.read_csv(csv_url, encoding='utf-8', on_bad_lines='skip')
         except Exception as e:
             st.error(f"Failed to read CSV file: {str(e)}")
             st.stop()
