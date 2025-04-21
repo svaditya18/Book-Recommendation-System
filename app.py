@@ -15,20 +15,6 @@ import re
 from gensim import corpora, models
 import time
 
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow info and warning messages
-
-
-
-
-
-
-
-# Your existing code continues here
-
-
-
-
 # Set page config
 st.set_page_config(
     page_title="Book Recommendation System",
@@ -38,11 +24,8 @@ st.set_page_config(
 
 # Download NLTK resources
 nltk.download('punkt')
-nltk.download('punkt_tab')
 nltk.download('stopwords')
 nltk.download('wordnet')
-nltk.download('omw-1.4') 
-
 
 
  # Preprocessing
@@ -50,13 +33,12 @@ stop_words = set(stopwords.words('english'))
 lemmatizer = WordNetLemmatizer()
     
 def preprocess_text(text):
-    if isinstance(text, str):
-        text = re.sub(r'[^\w\s]', '', text.lower())  # lowercase and remove punctuation
-        tokens = text.split()  # simple whitespace tokenizer
-        tokens = [lemmatizer.lemmatize(word) for word in tokens if word not in stop_words]
-        return ' '.join(tokens)
-    return ""
-
+        if isinstance(text, str):
+            text = re.sub(r'[^\w\s]', '', text)
+            tokens = nltk.word_tokenize(text.lower())
+            tokens = [lemmatizer.lemmatize(word) for word in tokens if word not in stop_words]
+            return ' '.join(tokens)
+        return ""
 
 def get_lda_features(text, dictionary, lda_model):
     tokens = preprocess_text(text).split()
@@ -71,25 +53,13 @@ def load_data_and_models():
     """Load data and train models (cached for performance)"""
     # Load data with encoding fallback
     try:
-        csv_url = "https://raw.githubusercontent.com/svaditya18/Book-Recommendation-System/main/data/book_details.csv"
-        df = pd.read_csv(csv_url, encoding='utf-8',on_bad_lines='skip')
+        df = pd.read_csv(r"C:\Users\adity\OneDrive\Desktop\br\data\book_details.csv", encoding='utf-8')
     except UnicodeDecodeError:
         try:
-            csv_url = "https://raw.githubusercontent.com/svaditya18/Book-Recommendation-System/main/data/book_details.csv"
-            df = pd.read_csv(csv_url, encoding='latin1',on_bad_lines='skip')
+            df = pd.read_csv(r"C:\Users\adity\OneDrive\Desktop\br\data\book_details.csv", encoding='latin1')
         except Exception as e:
             st.error(f"Failed to read CSV file: {str(e)}")
             st.stop()
-
-    st.write("Loaded columns:", df.columns.tolist())  # ✅ Show actual column names
-
-     # Ensure the required columns exist
-    if "title" in df.columns and "description" in df.columns:
-        df = df[["title", "description"]].dropna().reset_index(drop=True)
-    else:
-        st.error("The required columns 'title' and 'description' are missing from the data.")
-        st.stop()
-
     
     # Continue with data processing
     df = df[["title", "description"]].dropna().reset_index(drop=True)
