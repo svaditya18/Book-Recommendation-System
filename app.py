@@ -20,6 +20,17 @@ try:
 except LookupError:
     nltk.download('punkt')
 
+
+
+# Download punkt_tab resource
+try:
+    nltk.data.find('tokenizers/punkt_tab')
+except LookupError:
+    nltk.download('punkt_tab')
+
+# Your existing code continues here
+
+
 # Set page config
 st.set_page_config(
     page_title="Book Recommendation System",
