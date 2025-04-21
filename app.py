@@ -57,7 +57,7 @@ def load_data_and_models():
         df = pd.read_csv(csv_url, encoding='utf-8',on_bad_lines='skip')
     except UnicodeDecodeError:
         try:
-           csv_url = "https://github.com/svaditya18/Book-Recommendation-System/blob/main/data/book_details.csv"
+            csv_url = "https://github.com/svaditya18/Book-Recommendation-System/blob/main/data/book_details.csv"
             df = pd.read_csv(csv_url, encoding='latin1',on_bad_lines='skip')
         except Exception as e:
             st.error(f"Failed to read CSV file: {str(e)}")
