@@ -40,6 +40,7 @@ st.set_page_config(
 nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('wordnet')
+nltk.download('omw-1.4') 
 
 
  # Preprocessing
@@ -47,12 +48,18 @@ stop_words = set(stopwords.words('english'))
 lemmatizer = WordNetLemmatizer()
     
 def preprocess_text(text):
-        if isinstance(text, str):
-            text = re.sub(r'[^\w\s]', '', text)
+    if isinstance(text, str):
+        # Try using a simpler tokenizer first
+        try:
             tokens = nltk.word_tokenize(text.lower())
-            tokens = [lemmatizer.lemmatize(word) for word in tokens if word not in stop_words]
-            return ' '.join(tokens)
-        return ""
+        except LookupError:
+            # Fallback to simple whitespace tokenizer if punkt fails
+            tokens = text.lower().split()
+        
+        text = re.sub(r'[^\w\s]', '', text)
+        tokens = [lemmatizer.lemmatize(word) for word in tokens if word not in stop_words]
+        return ' '.join(tokens)
+    return ""
 
 def get_lda_features(text, dictionary, lda_model):
     tokens = preprocess_text(text).split()
