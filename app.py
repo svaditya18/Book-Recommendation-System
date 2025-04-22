@@ -22,29 +22,21 @@ def initialize_nltk():
     try:
         nltk_data_dir = os.path.join(os.getcwd(), 'nltk_data')
         os.makedirs(nltk_data_dir, exist_ok=True)
-        
-        # Set NLTK path before any downloads
+
         nltk.data.path = [nltk_data_dir] + nltk.data.path
-        
-        # Download required resources
-        required_nltk = ['punkt', 'stopwords', 'wordnet', 'omw-1.4']
-        for resource in required_nltk:
-            try:
-                nltk.download(resource, download_dir=nltk_data_dir)
-            except Exception as e:
-                st.warning(f"Could not download NLTK resource {resource}: {e}")
-                continue
-                
-        # Verify punkt tokenizer is available
-        try:
-            nltk.data.find('tokenizers/punkt')
-        except LookupError:
-            st.error("Punkt tokenizer not found after download attempt")
-            st.stop()
-            
+
+        # Download necessary resources
+        required_resources = ['punkt', 'stopwords', 'wordnet', 'omw-1.4']
+        for resource in required_resources:
+            nltk.download(resource, download_dir=nltk_data_dir)
+
+        # Verify that 'punkt' was successfully downloaded
+        nltk.data.find('tokenizers/punkt')
+
     except Exception as e:
-        st.error(f"Error during NLTK initialization: {e}")
+        st.error(f"Error initializing NLTK: {e}")
         st.stop()
+
 
 # Initialize NLTK at the start
 initialize_nltk()
