@@ -19,30 +19,26 @@ import os
 # Replace your NLTK setup section with this:
 try:
     nltk_data_dir = os.path.join(os.getcwd(), 'nltk_data')
-    
-    # 1. Set path FIRST before any NLTK operations
+    os.makedirs(nltk_data_dir, exist_ok=True)  # Ensure directory exists
+
+    # Set NLTK path *before* any NLTK operations
     nltk.data.path = [nltk_data_dir] + nltk.data.path
-    
-    # 2. Create directory if not exists
-    os.makedirs(nltk_data_dir, exist_ok=True)
-    
-    # 3. Updated resource list with punkt_tab
-    required_nltk = ['punkt', 'punkt_tab', 'stopwords', 'wordnet', 'omw-1.4']
-    
-    # 4. Force download with explicit path
+
+    # Download resources
+    required_nltk = ['punkt', 'stopwords', 'wordnet', 'omw-1.4']
     for resource in required_nltk:
         try:
             nltk.download(resource, download_dir=nltk_data_dir)
         except Exception as e:
-            st.error(f"""Failed to download {resource}. Deployment requires:
-                     - Add 'punkt_tab' to required resources
-                     - Set NLTK path before download
-                     - Verify directory permissions""")
+            st.error(f"Failed to download NLTK resource {resource}: {e}")
             st.stop()
-            
-except Exception as e:
-    st.error(f"Critical NLTK initialization error: {str(e)}")
-    st.stop()
+
+    # Load the punkt tokenizer explicitly (CRITICAL STEP)
+    try:
+        tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
+    except Exception as e:
+        st.error(f"Failed to load punkt tokenizer: {e}")
+        st.stop()
 
 
 # Set page config
@@ -52,7 +48,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# Download NLTK resources
 
 
 
@@ -61,12 +56,17 @@ stop_words = set(stopwords.words('english'))
 lemmatizer = WordNetLemmatizer()
     
 def preprocess_text(text):
-        if isinstance(text, str):
-            text = re.sub(r'[^\w\s]', '', text)
-            tokens = nltk.word_tokenize(text.lower())
-            tokens = [lemmatizer.lemmatize(word) for word in tokens if word not in stop_words]
-            return ' '.join(tokens)
-        return ""
+    if isinstance(text, str):
+        text = re.sub(r'[^\w\s]', '', text)
+        try:
+            tokens = nltk.word_tokenize(text.lower())  # Use nltk.word_tokenize
+        except Exception as e:
+            st.error(f"Tokenization error: {e}")
+            return ""  # Or handle the error as appropriate
+        tokens = [lemmatizer.lemmatize(word) for word in tokens if word not in stop_words]
+        return ' '.join(tokens)
+    return ""
+
 
 def get_lda_features(text, dictionary, lda_model):
     tokens = preprocess_text(text).split()
