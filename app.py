@@ -86,47 +86,50 @@ def load_data_and_models():
         df = pd.read_csv(csv_url, encoding='utf-8', on_bad_lines='skip')
     except UnicodeDecodeError:
         try:
-            
-            csv_url = "https://raw.githubusercontent.com/svaditya18/Book-Recommendation-System/main/data/book_details.csv"
             df = pd.read_csv(csv_url, encoding='latin1', on_bad_lines='skip')
         except Exception as e:
             st.error(f"Failed to read CSV file: {str(e)}")
             st.stop()
-    
+
     # Continue with data processing
     df = df[["title", "description"]].dropna().reset_index(drop=True)
     df = df[:5000]  # Limit dataset size
-    
-  
-    
+
+    # Preprocess descriptions
     df['processed_description'] = df['description'].apply(preprocess_text)
-    
+
+    # Drop empty processed rows
+    original_count = len(df)
+    df = df[df['processed_description'].str.strip() != ""]
+    removed = original_count - len(df)
+    if removed > 0:
+        st.warning(f"{removed} books removed due to empty processed descriptions.")
+
     # TF-IDF Vectorization
     tfidf_vectorizer = TfidfVectorizer(max_features=1000, ngram_range=(1, 3))
     tfidf_matrix = tfidf_vectorizer.fit_transform(df['processed_description'])
-    
+
     # Load Universal Sentence Encoder
     model = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
     embeddings = model(df['description'].tolist()).numpy()
-    
+
     # Topic Modeling (LDA)
     processed_descriptions_for_lda = [text.split() for text in df['processed_description']]
     dictionary = corpora.Dictionary(processed_descriptions_for_lda)
     corpus = [dictionary.doc2bow(text) for text in processed_descriptions_for_lda]
     lda_model = models.LdaModel(corpus, num_topics=20, random_state=42, id2word=dictionary)
-    
-    
-    
-    df['lda_features'] = df['description'].apply(lambda x: get_lda_features(x, dictionary, lda_model))
 
+    # Generate LDA features
+    df['lda_features'] = df['description'].apply(lambda x: get_lda_features(x, dictionary, lda_model))
     lda_features_array = np.vstack(df['lda_features'].values)
-    
-    # Combine Features and train NN model
+
+    # Combine features and train Nearest Neighbors
     combined_features = np.hstack([embeddings, tfidf_matrix.toarray(), lda_features_array])
     nn = NearestNeighbors(n_neighbors=10, metric='cosine')
     nn.fit(combined_features)
-    
+
     return df, model, tfidf_vectorizer, nn, dictionary, lda_model, embeddings, tfidf_matrix
+
 
 def get_recommendations(query, method, df, model, tfidf_vectorizer, nn, dictionary, lda_model, embeddings, tfidf_matrix):
     """Get book recommendations based on the query and method"""
