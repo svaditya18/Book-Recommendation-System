@@ -16,24 +16,32 @@ import time
 import os
 
 
+# Replace your NLTK setup section with this:
 try:
-    # Create a directory for NLTK data in the current working directory
     nltk_data_dir = os.path.join(os.getcwd(), 'nltk_data')
+    
+    # 1. Set path FIRST before any NLTK operations
+    nltk.data.path = [nltk_data_dir] + nltk.data.path
+    
+    # 2. Create directory if not exists
     os.makedirs(nltk_data_dir, exist_ok=True)
     
-    # Set the NLTK data path
-    nltk.data.path.append(nltk_data_dir)
+    # 3. Updated resource list with punkt_tab
+    required_nltk = ['punkt', 'punkt_tab', 'stopwords', 'wordnet', 'omw-1.4']
     
-    # Download NLTK resources with error handling
-    required_nltk = ['punkt',"punkt_tab", 'stopwords', 'wordnet', 'omw-1.4']
+    # 4. Force download with explicit path
     for resource in required_nltk:
         try:
             nltk.download(resource, download_dir=nltk_data_dir)
         except Exception as e:
-            st.warning(f"Could not download NLTK resource {resource}: {str(e)}")
-            # Try to continue if some resources are already available
+            st.error(f"""Failed to download {resource}. Deployment requires:
+                     - Add 'punkt_tab' to required resources
+                     - Set NLTK path before download
+                     - Verify directory permissions""")
+            st.stop()
+            
 except Exception as e:
-    st.error(f"Error setting up NLTK: {str(e)}")
+    st.error(f"Critical NLTK initialization error: {str(e)}")
     st.stop()
 
 
