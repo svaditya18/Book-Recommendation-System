@@ -95,19 +95,33 @@ def load_data_and_models():
     df = df[["title", "description"]].dropna().reset_index(drop=True)
     df = df[:5000]  # Limit dataset size
 
-    # Preprocess descriptions
+       # Preprocess descriptions
     df['processed_description'] = df['description'].apply(preprocess_text)
 
     # Drop empty processed rows
     original_count = len(df)
     df = df[df['processed_description'].str.strip() != ""]
     removed = original_count - len(df)
+
+    if len(df) == 0:
+        st.error("All descriptions were removed during preprocessing. Check preprocessing logic.")
+        st.stop()
+
     if removed > 0:
         st.warning(f"{removed} books removed due to empty processed descriptions.")
 
+    # Check again before TF-IDF
+    if df['processed_description'].str.strip().eq("").all():
+        st.error("Processed descriptions are all empty — can't build TF-IDF model.")
+        st.stop()
+
     # TF-IDF Vectorization
-    tfidf_vectorizer = TfidfVectorizer(max_features=1000, ngram_range=(1, 3))
-    tfidf_matrix = tfidf_vectorizer.fit_transform(df['processed_description'])
+    try:
+        tfidf_vectorizer = TfidfVectorizer(max_features=1000, ngram_range=(1, 3))
+        tfidf_matrix = tfidf_vectorizer.fit_transform(df['processed_description'])
+    except ValueError as e:
+        st.error(f"TF-IDF Vectorization failed: {e}")
+        st.stop()
 
     # Load Universal Sentence Encoder
     model = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
