@@ -39,6 +39,9 @@ try:
     except Exception as e:
         st.error(f"Failed to load punkt tokenizer: {e}")
         st.stop()
+except Exception as e:
+    st.error(f"Error during NLTK setup: {e}")
+    st.stop()
 
 
 # Set page config
