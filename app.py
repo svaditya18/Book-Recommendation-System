@@ -57,16 +57,20 @@ stop_words = set(stopwords.words('english'))
 lemmatizer = WordNetLemmatizer()
     
 def preprocess_text(text):
-    if isinstance(text, str):
-        text = re.sub(r'[^\w\s]', '', text)
-        try:
-            tokens = nltk.word_tokenize(text.lower())  # Use nltk.word_tokenize
-        except Exception as e:
-            st.error(f"Tokenization error: {e}")
-            return ""  # Or handle the error as appropriate
-        tokens = [lemmatizer.lemmatize(word) for word in tokens if word not in stop_words]
-        return ' '.join(tokens)
-    return ""
+    if not isinstance(text, str) or text.strip() == "":
+        return ""
+    
+    text = re.sub(r"[^\w\s]", "", text)  # remove punctuation
+    try:
+        tokens = nltk.word_tokenize(text.lower())
+    except Exception as e:
+        st.warning(f"Tokenization failed: {e}")
+        return ""
+
+    tokens = [lemmatizer.lemmatize(t) for t in tokens if t.isalpha()]
+    tokens = [t for t in tokens if t not in stop_words]
+    return " ".join(tokens)
+
 
 
 def get_lda_features(text, dictionary, lda_model):
@@ -80,7 +84,7 @@ def get_lda_features(text, dictionary, lda_model):
 @st.cache_resource
 def load_data_and_models():
     """Load data and train models (cached for performance)"""
-    # Load data with encoding fallback
+    # Load CSV
     try:
         csv_url = "https://raw.githubusercontent.com/svaditya18/Book-Recommendation-System/main/data/book_details.csv"
         df = pd.read_csv(csv_url, encoding='utf-8', on_bad_lines='skip')
@@ -91,36 +95,35 @@ def load_data_and_models():
             st.error(f"Failed to read CSV file: {str(e)}")
             st.stop()
 
-    # Continue with data processing
     df = df[["title", "description"]].dropna().reset_index(drop=True)
-    df = df[:5000]  # Limit dataset size
+    df = df[:5000]  # optional size limit
 
-       # Preprocess descriptions
+    # Preprocess descriptions
     df['processed_description'] = df['description'].apply(preprocess_text)
 
-    # Drop empty processed rows
+    # Log & filter empties
+    st.write("🔍 Sample processed descriptions:")
+    st.write(df['processed_description'].head())
+
+    df['token_count'] = df['processed_description'].apply(lambda x: len(x.split()))
+    st.write("🧾 Token count stats:", df['token_count'].describe())
+
     original_count = len(df)
     df = df[df['processed_description'].str.strip() != ""]
     removed = original_count - len(df)
 
     if len(df) == 0:
-        st.error("All descriptions were removed during preprocessing. Check preprocessing logic.")
+        st.error("❌ All descriptions were removed during preprocessing.")
         st.stop()
-
     if removed > 0:
-        st.warning(f"{removed} books removed due to empty processed descriptions.")
+        st.warning(f"⚠️ Removed {removed} books with empty processed descriptions.")
 
-    # Check again before TF-IDF
-    if df['processed_description'].str.strip().eq("").all():
-        st.error("Processed descriptions are all empty — can't build TF-IDF model.")
-        st.stop()
-
-    # TF-IDF Vectorization
+    # TF-IDF vectorization with error handling
     try:
         tfidf_vectorizer = TfidfVectorizer(max_features=1000, ngram_range=(1, 3))
         tfidf_matrix = tfidf_vectorizer.fit_transform(df['processed_description'])
     except ValueError as e:
-        st.error(f"TF-IDF Vectorization failed: {e}")
+        st.error(f"TF-IDF vectorization failed: {e}")
         st.stop()
 
     # Load Universal Sentence Encoder
@@ -128,21 +131,22 @@ def load_data_and_models():
     embeddings = model(df['description'].tolist()).numpy()
 
     # Topic Modeling (LDA)
-    processed_descriptions_for_lda = [text.split() for text in df['processed_description']]
-    dictionary = corpora.Dictionary(processed_descriptions_for_lda)
-    corpus = [dictionary.doc2bow(text) for text in processed_descriptions_for_lda]
+    processed_lda = [desc.split() for desc in df['processed_description']]
+    dictionary = corpora.Dictionary(processed_lda)
+    corpus = [dictionary.doc2bow(text) for text in processed_lda]
     lda_model = models.LdaModel(corpus, num_topics=20, random_state=42, id2word=dictionary)
 
-    # Generate LDA features
+    # Extract LDA features
     df['lda_features'] = df['description'].apply(lambda x: get_lda_features(x, dictionary, lda_model))
     lda_features_array = np.vstack(df['lda_features'].values)
 
-    # Combine features and train Nearest Neighbors
+    # Combine features and build NearestNeighbors model
     combined_features = np.hstack([embeddings, tfidf_matrix.toarray(), lda_features_array])
     nn = NearestNeighbors(n_neighbors=10, metric='cosine')
     nn.fit(combined_features)
 
     return df, model, tfidf_vectorizer, nn, dictionary, lda_model, embeddings, tfidf_matrix
+
 
 
 def get_recommendations(query, method, df, model, tfidf_vectorizer, nn, dictionary, lda_model, embeddings, tfidf_matrix):
