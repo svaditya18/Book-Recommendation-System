@@ -16,18 +16,26 @@ from gensim import corpora, models
 import time
 import os
 
-nltk_data_path = os.path.join(os.getcwd(), 'nltk_data')
-os.makedirs(nltk_data_path, exist_ok=True)
-nltk.data.path.append(nltk_data_path)
-
 try:
-    nltk.download('punkt', download_dir=nltk_data_path)
-    nltk.download('stopwords', download_dir=nltk_data_path)
-    nltk.download('wordnet', download_dir=nltk_data_path)
-    nltk.download('omw-1.4', download_dir=nltk_data_path)
+    # Create a directory for NLTK data in the current working directory
+    nltk_data_dir = os.path.join(os.getcwd(), 'nltk_data')
+    os.makedirs(nltk_data_dir, exist_ok=True)
+    
+    # Set the NLTK data path
+    nltk.data.path.append(nltk_data_dir)
+    
+    # Download NLTK resources with error handling
+    required_nltk = ['punkt', 'stopwords', 'wordnet', 'omw-1.4']
+    for resource in required_nltk:
+        try:
+            nltk.download(resource, download_dir=nltk_data_dir)
+        except Exception as e:
+            st.warning(f"Could not download NLTK resource {resource}: {str(e)}")
+            # Try to continue if some resources are already available
 except Exception as e:
-    st.error(f"Error downloading NLTK data: {e}")
+    st.error(f"Error setting up NLTK: {str(e)}")
     st.stop()
+
 
 # Set page config
 st.set_page_config(
