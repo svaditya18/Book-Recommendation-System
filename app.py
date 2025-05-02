@@ -26,7 +26,7 @@ def initialize_nltk():
         nltk.data.path = [nltk_data_dir] + nltk.data.path
 
         # Download necessary resources
-        required_resources = ['punkt', 'stopwords', 'wordnet', 'omw-1.4']
+        required_resources = ['punkt',"punkt_tab", 'stopwords', 'wordnet', 'omw-1.4']
         for resource in required_resources:
             nltk.download(resource, download_dir=nltk_data_dir)
 
